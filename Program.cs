@@ -20,21 +20,132 @@ List<Dog> dogs = new List<Dog>
         WalkerId = 1,
     },
 };
-List<Walker> walkers = new List<Walker>
+List<WalkerCity> walkerCities = new List<WalkerCity>
 {
-    new Walker { Id = 1, Name = "M'Lee" },
-    new Walker { Id = 2, Name = "Eric" },
-    new Walker { Id = 3, Name = "Riley" },
-    new Walker { Id = 4, Name = "Bee" },
+    new WalkerCity
+    {
+        WalkerCityId = 1,
+        WalkerId = 1,
+        CityId = 1,
+    },
+    new WalkerCity
+    {
+        WalkerCityId = 2,
+        WalkerId = 1,
+        CityId = 2,
+    },
+    new WalkerCity
+    {
+        WalkerCityId = 3,
+        WalkerId = 2,
+        CityId = 3,
+    },
+    new WalkerCity
+    {
+        WalkerCityId = 4,
+        WalkerId = 2,
+        CityId = 4,
+    },
+    new WalkerCity
+    {
+        WalkerCityId = 5,
+        WalkerId = 3,
+        CityId = 1,
+    },
+    new WalkerCity
+    {
+        WalkerCityId = 6,
+        WalkerId = 3,
+        CityId = 2,
+    },
+    new WalkerCity
+    {
+        WalkerCityId = 7,
+        WalkerId = 3,
+        CityId = 4,
+    },
+    new WalkerCity
+    {
+        WalkerCityId = 8,
+        WalkerId = 4,
+        CityId = 2,
+    },
+    new WalkerCity
+    {
+        WalkerCityId = 9,
+        WalkerId = 4,
+        CityId = 3,
+    },
+    new WalkerCity
+    {
+        WalkerCityId = 10,
+        WalkerId = 4,
+        CityId = 4,
+    },
 };
 
 List<City> cities = new List<City>
 {
-    new City { Id = 1, Name = "Nashville" },
-    new City { Id = 2, Name = "Portland" },
-    new City { Id = 3, Name = "New York" },
-    new City { Id = 4, Name = "Chicago" },
+    new City
+    {
+        Id = 1,
+        Name = "Nashville",
+        walkerCities = walkerCities.Where(wc => wc.CityId == 1).ToList(),
+    },
+    new City
+    {
+        Id = 2,
+        Name = "Portland",
+        walkerCities = walkerCities.Where(wc => wc.CityId == 2).ToList(),
+    },
+    new City
+    {
+        Id = 3,
+        Name = "New York",
+        walkerCities = walkerCities.Where(wc => wc.CityId == 3).ToList(),
+    },
+    new City
+    {
+        Id = 4,
+        Name = "Chicago",
+        walkerCities = walkerCities.Where(wc => wc.CityId == 4).ToList(),
+    },
 };
+
+List<Walker> walkers = new List<Walker>
+{
+    new Walker
+    {
+        Id = 1,
+        Name = "M'Lee",
+        walkerCities = walkerCities.Where(wc => wc.WalkerId == 1).ToList(),
+    },
+    new Walker
+    {
+        Id = 2,
+        Name = "Eric",
+        walkerCities = walkerCities.Where(wc => wc.WalkerId == 2).ToList(),
+    },
+    new Walker
+    {
+        Id = 3,
+        Name = "Riley",
+        walkerCities = walkerCities.Where(wc => wc.WalkerId == 3).ToList(),
+    },
+    new Walker
+    {
+        Id = 4,
+        Name = "Bee",
+        walkerCities = walkerCities.Where(wc => wc.WalkerId == 4).ToList(),
+    },
+};
+
+// allows for use of navigation props within both walker/city classes.
+foreach (var wc in walkerCities)
+{
+    wc.Walker = walkers.First(w => w.Id == wc.WalkerId);
+    wc.City = cities.First(c => c.Id == wc.CityId);
+}
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -124,21 +235,39 @@ app.MapGet(
     "/api/cities",
     () =>
     {
-        var cityList = cities.Select(c => new CityListDTO { Id = c.Id, Name = c.Name });
+        var cityList = cities.Select(c => new CityDTO { Id = c.Id, Name = c.Name });
         return cityList;
     }
 );
-
 
 //walker endpoints
 app.MapGet(
     "/api/walkers",
     () =>
     {
-        var walkerList = walkers.Select(w => new WalkerListDTO { Id = w.Id, Name = w.Name });
+        var walkerList = walkers.Select(w => new WalkerDTO { Id = w.Id, Name = w.Name });
         return walkerList;
     }
 );
 
+app.MapGet(
+    "/api/walkers/{cityid}",
+    (int cityid) =>
+    {
+        return walkers
+            .Where(walker => walker.walkerCities.Any(wc => wc.CityId == cityid))
+            .Select(walker => new WalkerDTO { Id = walker.Id, Name = walker.Name });
+    }
+);
+app.MapDelete(
+    "/api/walkers/{id}",
+    (int id) =>
+    {
+        Walker deleteWalker = walkers.FirstOrDefault(w => w.Id == id);
+        walkers.Remove(deleteWalker);
+
+        return Results.NoContent();
+    }
+);
 
 app.Run();
